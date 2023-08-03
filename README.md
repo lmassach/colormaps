@@ -1,2 +1,2 @@
-# colormaps
-Colormaps and colormap-related utilities
+# Colormaps
+Colormaps and colormap-related utilities.
