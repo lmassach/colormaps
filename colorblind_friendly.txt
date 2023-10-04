@@ -1,0 +1,9 @@
+From https://scottplot.net/cookbook/4.1/colors/#colorblind-friendly https://www.nature.com/articles/nmeth.1618.pdf
+#000000
+#E69F00
+#56B4E9
+#009E73
+#F0E442
+#0072B2
+#D55E00
+#CC79A7
