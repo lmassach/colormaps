@@ -43,6 +43,8 @@ if __name__ == "__main__":
     sub = parser.add_subparsers(help="Sub-command", dest='cmd')
     # Plot palette
     cmd = sub.add_parser("plot", aliases=["p"], help="Plots a palette's components (reads new-line separated colors from stdin)")
+    cmd.add_argument("--dalton", "-d", action="store_true", help="Simulate color blindness")
+    cmd.add_argument("--ntsc", action="store_true", help="Show NTSC brightness")
     # Create diverging palette
     cmd = sub.add_parser("create-diverging", aliases=["cd"], help="Creates a diverging palette")
     cmd.add_argument("n_colors", type=int, help="Number of colors")
@@ -69,13 +71,25 @@ if __name__ == "__main__":
         fig, (ax1, axc) = plt.subplots(2, 1, sharex=True, gridspec_kw=dict(height_ratios=[0.9, 0.1]))
         hls = list(map(lambda x: rgb_to_hls(*x), colors))
         h, l, s = [x[0] for x in hls], [x[1] for x in hls], [x[2] for x in hls]
-        ntsc_brightness = [0.3 * x[0] + 0.59 * x[1] + 0.11 * x[2] for x in colors]
         ax1.plot(h, 'k-', label='H')
         ax1.plot(l, 'k--', label='L')
         ax1.plot(s, 'k:', label='S')
-        ax1.plot(ntsc_brightness, 'r-', label='NTSC')
+        if args.dalton:
+            from daltonlens.simulate import Deficiency, Simulator_Vienot1999
+            u_colors = (np.array(colors) * 255).astype(np.uint8).reshape((-1, 1, 3))
+            sim = Simulator_Vienot1999()
+            for d, lbl, c in [(Deficiency.DEUTAN, "Deu", 'tab:blue'), (Deficiency.PROTAN, "Pro", 'tab:orange'), (Deficiency.TRITAN, "Tri", 'tab:green')]:
+                d_colors = sim.simulate_cvd(u_colors, d, 1.0).reshape(-1, 3).astype(np.float) / 255
+                hls = list(map(lambda x: rgb_to_hls(*x), d_colors))
+                h, l, s = [x[0] for x in hls], [x[1] for x in hls], [x[2] for x in hls]
+                ax1.plot(h, '-', c=c, label=f'H {lbl}')
+                ax1.plot(l, '--', c=c, label=f'L {lbl}')
+                ax1.plot(s, ':', c=c, label=f'S {lbl}')
+        if args.ntsc:
+            ntsc_brightness = [0.3 * x[0] + 0.59 * x[1] + 0.11 * x[2] for x in colors]
+            ax1.plot(ntsc_brightness, 'r-', label='NTSC')
         ax1.set_ylim(0, 1)
-        ax1.legend()
+        ax1.legend(ncols=4 if args.dalton else 1)
         ax1.grid()
         plot_cmap(axc, colors)
         plt.show()
